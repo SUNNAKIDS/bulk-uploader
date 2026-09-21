@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SunnaKids — Web Bulk Downloader & Uploader</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --console-bg: #090d16;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      --mono-font: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    header {
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .notice-box {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-size: 0.85rem;
+      color: #fbbf24;
+      line-height: 1.4;
+    }
+
+    .notice-box strong {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: #0f172a;
+      color: var(--text-main);
+      font-family: var(--mono-font);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.2s, transform 0.1s, opacity 0.2s;
+      user-select: none;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #0f172a;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .stat-card {
+      background: #131d2e;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+    }
+
+    .stat-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 1.25rem;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: #0f172a;
+      border-radius: 9999px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #22c55e);
+      border-radius: 9999px;
+      transition: width 0.25s ease-out;
+    }
+
+    .log-container {
+      background: var(--console-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 340px;
+    }
+
+    .log-header {
+      background: #111827;
+      padding: 0.6rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .log-body {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      overflow-y: auto;
+      font-family: var(--mono-font);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .log-entry {
+      word-break: break-all;
+    }
+
+    .log-entry.info { color: #94a3b8; }
+    .log-entry.step { color: #38bdf8; font-weight: 600; }
+    .log-entry.ok { color: #22c55e; }
+    .log-entry.warn { color: #f59e0b; }
+    .log-entry.err { color: #f43f5e; font-weight: 600; }
+
+    .tag {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-right: 0.4rem;
+      font-weight: 600;
+    }
+    .tag-ok { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .tag-err { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+    .tag-step { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>SunnaKids Bulk Uploader</h1>
+      <p>Download Surahs 105–114, generate dynamic thumbnails, and upload directly to your device.</p>
+    </header>
+
+    <div class="notice-box">
+      <strong>⚠️ Browser Connection Note:</strong>
+      All network requests originate straight from your browser to your local device. 
+      If hosting this page on <strong>HTTPS</strong> (e.g. Vercel/Netlify), your browser may block requests to local <strong>HTTP</strong> IPs (<code>http://192.168.x.x</code>) under Mixed Content security rules. For best results, host or access this page over <strong>plain HTTP</strong> or open it directly as a local file.
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="deviceIp">Device IP Address</label>
+        <div class="input-row">
+          <input type="text" id="deviceIp" placeholder="192.168.1.21" value="192.168.1.21" />
+          <button id="pingBtn" class="btn btn-outline" onclick="testPing()">Test Ping</button>
+          <button id="startBtn" class="btn btn-primary" onclick="startProcess()">Start Bulk Upload</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">Quran Tracks</div>
+          <div class="stat-val">10 Surahs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Other Categories</div>
+          <div class="stat-val">15 Tracks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Generated Covers</div>
+          <div class="stat-val">25 Unique PNGs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Current Status</div>
+          <div class="stat-val" id="statusBadge" style="color: var(--text-muted);">Idle</div>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <div class="progress-labels">
+          <span id="progressText">Ready to start</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressBar" class="progress-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 0;">
+      <div class="log-container">
+        <div class="log-header">
+          <span>Activity Log</span>
+          <div style="display:flex; gap: 0.5rem;">
+            <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="clearLogs()">Clear</button>
+            <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="copyLogs()">Copy</button>
+          </div>
+        </div>
+        <div id="logBody" class="log-body">
+          <div class="log-entry info">Ready. Enter device IP and click "Start Bulk Upload".</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      SunnaKids Tooling &bull; Client-Side Browser Uploader
+    </footer>
+  </div>
+
+  <script>
+    // Configuration & Data
+    const SOURCE_URL_FMT = "https://server8.mp3quran.net/afs/{num}.mp3";
+    const SOURCE_NUMS = [105, 106, 107, 108, 109, 110, 111, 112, 113, 114];
+    
+    const SURAH_NAMES = {
+      105: "Al-Fil", 106: "Quraysh", 107: "Al-Ma'un", 108: "Al-Kawthar",
+      109: "Al-Kafirun", 110: "An-Nasr", 111: "Al-Masad", 112: "Al-Ikhlas",
+      113: "Al-Falaq", 114: "An-Nas"
+    };
+
+    const EXTRA_CATEGORIES = {
+      "prophets": [
+        "Story of Prophet Ibrahim", "Story of Prophet Musa", 
+        "Story of Prophet Yusuf", "Story of Prophet Yunus", "Story of Prophet Isa"
+      ],
+      "original_stories": [
+        "The People of the Cave", "The People of the Elephant", 
+        "The Story of Luqman", "The Story of Qarun", "The Story of Dhul-Qarnayn"
+      ],
+      "companions": [
+        "Life of Abu Bakr", "Life of Umar", 
+        "Life of Uthman", "Life of Ali", "Life of Khalid ibn Al-Walid"
+      ]
+    };
+
+    const THUMB_COLORS = [
+      { bg: "#ffffff", fg: "#000000" },
+      { bg: "#000000", fg: "#ffffff" },
+      { bg: "#555555", fg: "#ffffff" },
+      { bg: "#006400", fg: "#ffffff" },
+      { bg: "#000080", fg: "#ffffff" },
+      { bg: "#8b0000", fg: "#ffffff" },
+      { bg: "#6b21a8", fg: "#ffffff" },
+      { bg: "#ea580c", fg: "#000000" },
+      { bg: "#eab308", fg: "#000000" },
+      { bg: "#06b6d4", fg: "#000000" },
+      { bg: "#c026d3", fg: "#ffffff" }
+    ];
+
+    let isRunning = false;
+
+    // Load saved IP
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('sunnakids_ip');
+      if (saved) document.getElementById('deviceIp').value = saved;
+    });
+
+    function getBaseUrl() {
+      let ip = document.getElementById('deviceIp').value.trim();
+      if (!ip) throw new Error("Please enter a device IP address");
+      localStorage.setItem('sunnakids_ip', ip);
+      ip = ip.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+      return `http://${ip}`;
+    }
+
+    function log(msg, type = "info") {
+      const body = document.getElementById('logBody');
+      const div = document.createElement('div');
+      div.className = `log-entry ${type}`;
+      div.innerHTML = msg;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function clearLogs() {
+      document.getElementById('logBody').innerHTML = '';
+    }
+
+    function copyLogs() {
+      const text = document.getElementById('logBody').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Logs copied to clipboard!");
+      });
+    }
+
+    function setProgress(current, total, label = "") {
+      const pct = Math.min(100, Math.round((current / total) * 100));
+      document.getElementById('progressBar').style.width = `${pct}%`;
+      document.getElementById('progressPercent').innerText = `${pct}%`;
+      if (label) document.getElementById('progressText').innerText = label;
+    }
+
+    function setStatus(text, color = "var(--text-muted)") {
+      const badge = document.getElementById('statusBadge');
+      badge.innerText = text;
+      badge.style.color = color;
+    }
+
+    function sanitizeFilename(name) {
+      return name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    }
+
+    // HTML5 Canvas Thumbnail Generator (149x199 PNG)
+    function generateThumbBlob(title) {
+      return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 149;
+        canvas.height = 199;
+        const ctx = canvas.getContext('2d');
+
+        const pair = THUMB_COLORS[Math.floor(Math.random() * THUMB_COLORS.length)];
+
+        // Background
+        ctx.fillStyle = pair.bg;
+        ctx.fillRect(0, 0, 149, 199);
+
+        // Text styling & wrap
+        ctx.fillStyle = pair.fg;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+        const words = title.split(' ');
+        const lines = [];
+        let currentLine = words[0];
+        const maxWidth = 135;
+
+        for (let i = 1; i < words.length; i++) {
+          const test = currentLine + ' ' + words[i];
+          if (ctx.measureText(test).width > maxWidth) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = test;
+          }
+        }
+        lines.push(currentLine);
+
+        const lineHeight = 20;
+        const startY = (199 - (lines.length - 1) * lineHeight) / 2;
+        lines.forEach((line, i) => {
+          ctx.fillText(line, 149 / 2, startY + (i * lineHeight));
+        });
+
+        canvas.toBlob((blob) => resolve(blob), 'image/png');
+      });
+    }
+
+    // Test ping helper
+    async function testPing() {
+      let baseUrl;
+      try {
+        baseUrl = getBaseUrl();
+      } catch (err) {
+        log(`<span class="tag tag-err">ERR</span> ${err.message}`, "err");
+        return;
+      }
+
+      log(`Pinging ${baseUrl}/ping ...`, "info");
+      try {
+        const res = await fetch(`${baseUrl}/ping`, { method: "GET", cache: "no-store" });
+        const text = await res.text();
+        log(`<span class="tag tag-ok">PING OK</span> Response: ${text}`, "ok");
+      } catch (err) {
+        log(`<span class="tag tag-err">PING FAIL</span> ${err.message} (Check device IP and network connection)`, "err");
+      }
+    }
+
+    // Binary upload helper
+    async function postBinary(url, params, blob) {
+      const q = new URLSearchParams(params).toString();
+      const fullUrl = `${url}?${q}`;
+      try {
+        const res = await fetch(fullUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/octet-stream' },
+          body: blob
+        });
+        const json = await res.json();
+        if (res.ok && json.status === "success") {
+          return { ok: true, path: json.path || "" };
+        }
+        return { ok: false, msg: json.message || `HTTP ${res.status}` };
+      } catch (err) {
+        return { ok: false, msg: err.message };
+      }
+    }
+
+    // Download single Surah with retry
+    async function downloadSurah(num) {
+      const padNum = String(num).padStart(3, '0');
+      const url = SOURCE_URL_FMT.replace('{num}', padNum);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status} from mp3quran.net`);
+      const blob = await res.blob();
+      if (blob.size < 1024) throw new Error(`File too small (${blob.size} bytes)`);
+      return blob;
+    }
+
+    // Main execution workflow
+    async function startProcess() {
+      if (isRunning) return;
+
+      let baseUrl;
+      try {
+        baseUrl = getBaseUrl();
+      } catch (err) {
+        log(`<span class="tag tag-err">ERR</span> ${err.message}`, "err");
+        return;
+      }
+
+      isRunning = true;
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('pingBtn').disabled = true;
+      setProgress(0, 100, "Starting...");
+      setStatus("Running...", "var(--primary)");
+
+      try {
+        // STEP 1: Download all 10 Surahs
+        log(`<span class="tag tag-step">STEP 1</span> Downloading Surahs 105-114 from mp3quran.net...`, "step");
+        const audioMap = {};
+        const totalSurahs = SOURCE_NUMS.length;
+
+        for (let i = 0; i < totalSurahs; i++) {
+          const num = SOURCE_NUMS[i];
+          const name = SURAH_NAMES[num];
+          setProgress(i, 35, `Downloading Surah ${num} (${name})...`);
+          log(`  [${num}] Downloading ${name}...`, "info");
+          try {
+            const blob = await downloadSurah(num);
+            audioMap[num] = blob;
+            log(`  [${num}] <span class="tag tag-ok">OK</span> ${(blob.size / 1024).toFixed(1)} KB`, "ok");
+          } catch (e) {
+            log(`  [${num}] <span class="tag tag-err">FAIL</span> ${e.message}`, "err");
+            throw new Error(`Failed to download Surah ${num}: ${e.message}`);
+          }
+        }
+
+        // STEP 2: Format Device
+        log(`<br><span class="tag tag-step">STEP 2</span> Formatting device NAND flash...`, "step");
+        setProgress(11, 35, "Formatting device...");
+        try {
+          const formatRes = await fetch(`${baseUrl}/api/format`, { method: 'POST' });
+          if (!formatRes.ok) throw new Error(`Format returned HTTP ${formatRes.status}`);
+          log(`  <span class="tag tag-ok">OK</span> NAND Formatted successfully.`, "ok");
+        } catch (e) {
+          log(`  <span class="tag tag-err">ERR</span> Format request failed: ${e.message}`, "err");
+          throw e;
+        }
+
+        // STEP 3: Categorized Uploads
+        // Total items: 10 (quran) + 5 (prophets) + 5 (original_stories) + 5 (companions) = 25 items
+        log(`<br><span class="tag tag-step">STEP 3</span> Uploading tracks and generating colorful thumbnails...`, "step");
+        const uploadUrl = `${baseUrl}/api/upload`;
+        let stepCount = 11;
+
+        // 3a. Quran category (all 10)
+        log(`<b>-- Category: quran --</b>`, "info");
+        for (const num of SOURCE_NUMS) {
+          const title = SURAH_NAMES[num];
+          const stem = sanitizeFilename(title);
+          setProgress(++stepCount, 36, `Uploading [quran] ${title}...`);
+
+          // Thumbnail
+          const thumbBlob = await generateThumbBlob(title);
+          await postBinary(uploadUrl, { name: `${stem}.png`, category: 'quran' }, thumbBlob);
+
+          // Audio
+          const audioBlob = audioMap[num];
+          const res = await postBinary(uploadUrl, { name: `${stem}.mp3`, category: 'quran', title: title }, audioBlob);
+
+          if (res.ok) {
+            log(`  <span class="tag tag-ok">OK</span> [quran] ${title}`, "ok");
+          } else {
+            log(`  <span class="tag tag-err">FAIL</span> [quran] ${title}: ${res.msg}`, "err");
+          }
+        }
+
+        // 3b. Re-use Surahs (105-109) for extra categories
+        const reUseIds = [105, 106, 107, 108, 109];
+        for (const [cat, titles] of Object.entries(EXTRA_CATEGORIES)) {
+          log(`<b>-- Category: ${cat} --</b>`, "info");
+          for (let i = 0; i < titles.length; i++) {
+            const title = titles[i];
+            const stem = sanitizeFilename(title);
+            const sourceNum = reUseIds[i];
+            const audioBlob = audioMap[sourceNum];
+
+            setProgress(++stepCount, 36, `Uploading [${cat}] ${title}...`);
+
+            // Thumbnail
+            const thumbBlob = await generateThumbBlob(title);
+            await postBinary(uploadUrl, { name: `${stem}.png`, category: cat }, thumbBlob);
+
+            // Audio
+            const res = await postBinary(uploadUrl, { name: `${stem}.mp3`, category: cat, title: title }, audioBlob);
+
+            if (res.ok) {
+              log(`  <span class="tag tag-ok">OK</span> [${cat}] ${title}`, "ok");
+            } else {
+              log(`  <span class="tag tag-err">FAIL</span> [${cat}] ${title}: ${res.msg}`, "err");
+            }
+          }
+        }
+
+        // STEP 4: Finalize
+        log(`<br><span class="tag tag-step">STEP 4</span> Finalizing & refreshing device...`, "step");
+        setProgress(36, 36, "Refreshing device...");
+        try {
+          await fetch(`${baseUrl}/api/refresh`, { method: 'POST' });
+          log(`  <span class="tag tag-ok">OK</span> Refresh complete.`, "ok");
+        } catch (e) {
+          log(`  <span class="tag tag-warn">WARN</span> Refresh error: ${e.message}`, "warn");
+        }
+
+        // STEP 5: Health Check
+        log(`<br><b>--- System Health ---</b>`, "info");
+        try {
+          const pingRes = await fetch(`${baseUrl}/ping`).then(r => r.text());
+          log(`  Ping: ${pingRes}`, "info");
+        } catch (e) { log(`  Ping failed: ${e.message}`, "warn"); }
+
+        try {
+          const healthRes = await fetch(`${baseUrl}/api/health`).then(r => r.text());
+          log(`  Health: ${healthRes}`, "info");
+        } catch (e) { log(`  Health failed: ${e.message}`, "warn"); }
+
+        setStatus("Completed!", "var(--accent-green)");
+        setProgress(100, 100, "All items uploaded successfully!");
+        log(`<br><span class="tag tag-ok">DONE</span> <b>Bulk download and upload process completed successfully!</b>`, "ok");
+
+      } catch (err) {
+        setStatus("Failed", "var(--accent-rose)");
+        log(`<br><span class="tag tag-err">ERROR</span> Process terminated: ${err.message}`, "err");
+      } finally {
+        isRunning = false;
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('pingBtn').disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
