@@ -278,7 +278,8 @@
           <input type="text" id="deviceIp" placeholder="192.168.1.21" value="192.168.1.21" />
           <button id="pingBtn" class="btn btn-outline" onclick="testPing()">Test Ping</button>
           <button id="formatBtn" class="btn btn-outline" onclick="formatDevice()">Format NAND</button>
-          <button id="startBtn" class="btn btn-primary" onclick="startProcess()">Start Bulk Upload</button>
+          <button id="demoBtn" class="btn btn-outline" onclick="startDemoUpload()">Demo Upload</button>
+          <button id="actualBtn" class="btn btn-primary" onclick="startActualUpload()">Actual Upload (JSON)</button>
         </div>
       </div>
 
@@ -516,10 +517,10 @@
     }
 
     function setButtonsDisabled(disabled) {
-      document.getElementById('startBtn').disabled = disabled;
-      document.getElementById('pingBtn').disabled = disabled;
-      const formatBtn = document.getElementById('formatBtn');
-      if (formatBtn) formatBtn.disabled = disabled;
+      ['pingBtn', 'formatBtn', 'demoBtn', 'actualBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = disabled;
+      });
     }
 
     // Format NAND helper with ping check
@@ -573,6 +574,28 @@
       }
     }
 
+    // Finalize device helper (refresh + health checks)
+    async function finalizeDevice(baseUrl) {
+      log(`<br><span class="tag tag-step">STEP: FINALIZE</span> Refreshing device...`, "step");
+      try {
+        await fetch(`${baseUrl}/api/refresh`, { method: 'POST' });
+        log(`  <span class="tag tag-ok">OK</span> Refresh complete.`, "ok");
+      } catch (e) {
+        log(`  <span class="tag tag-warn">WARN</span> Refresh error: ${e.message}`, "warn");
+      }
+
+      log(`<br><b>--- System Health ---</b>`, "info");
+      try {
+        const pingRes = await fetch(`${baseUrl}/ping`).then(r => r.text());
+        log(`  Ping: ${pingRes}`, "info");
+      } catch (e) { log(`  Ping failed: ${e.message}`, "warn"); }
+
+      try {
+        const healthRes = await fetch(`${baseUrl}/api/health`).then(r => r.text());
+        log(`  Health: ${healthRes}`, "info");
+      } catch (e) { log(`  Health failed: ${e.message}`, "warn"); }
+    }
+
     // Download single Surah with retry
     async function downloadSurah(num) {
       const padNum = String(num).padStart(3, '0');
@@ -584,8 +607,8 @@
       return blob;
     }
 
-    // Main execution workflow
-    async function startProcess() {
+    // 1. DEMO UPLOAD (One-by-one stream of 10 Surahs + re-used categories)
+    async function startDemoUpload() {
       if (isRunning) return;
 
       let baseUrl;
@@ -597,7 +620,7 @@
         return;
       }
 
-      // Pre-check: Device must be reachable before proceeding
+      // Pre-check ping
       log(`Checking device availability at ${baseUrl}/ping ...`, "info");
       const pingResult = await checkPing(baseUrl, 4000);
       if (!pingResult.ok) {
@@ -611,63 +634,36 @@
 
       isRunning = true;
       setButtonsDisabled(true);
-      setProgress(0, 100, "Device found. Starting downloads...");
+      setProgress(0, 100, "Starting Demo Upload...");
       setStatus("Running...", "var(--primary)");
 
       try {
-        // STEP 1: Download all 10 Surahs
-        log(`<span class="tag tag-step">STEP 1</span> Downloading Surahs 105-114 from mp3quran.net...`, "step");
-        const audioMap = {};
-        const totalSurahs = SOURCE_NUMS.length;
+        // Step 1: Format Device
+        log(`<br><span class="tag tag-step">STEP 1</span> Formatting device NAND flash...`, "step");
+        setProgress(2, 27, "Formatting device...");
+        const formatRes = await fetch(`${baseUrl}/api/format`, { method: 'POST' });
+        if (!formatRes.ok) throw new Error(`Format returned HTTP ${formatRes.status}`);
+        log(`  <span class="tag tag-ok">OK</span> NAND Formatted successfully.`, "ok");
 
-        for (let i = 0; i < totalSurahs; i++) {
-          const num = SOURCE_NUMS[i];
-          const name = SURAH_NAMES[num];
-          setProgress(i, 35, `Downloading Surah ${num} (${name})...`);
-          log(`  [${num}] Downloading ${name}...`, "info");
-          try {
-            const blob = await downloadSurah(num);
-            audioMap[num] = blob;
-            log(`  [${num}] <span class="tag tag-ok">OK</span> ${(blob.size / 1024).toFixed(1)} KB`, "ok");
-          } catch (e) {
-            log(`  [${num}] <span class="tag tag-err">FAIL</span> ${e.message}`, "err");
-            throw new Error(`Failed to download Surah ${num}: ${e.message}`);
-          }
-        }
-
-        // STEP 2: Format Device
-        log(`<br><span class="tag tag-step">STEP 2</span> Formatting device NAND flash...`, "step");
-        setProgress(11, 35, "Formatting device...");
-        try {
-          const formatRes = await fetch(`${baseUrl}/api/format`, { method: 'POST' });
-          if (!formatRes.ok) throw new Error(`Format returned HTTP ${formatRes.status}`);
-          log(`  <span class="tag tag-ok">OK</span> NAND Formatted successfully.`, "ok");
-        } catch (e) {
-          log(`  <span class="tag tag-err">ERR</span> Format request failed: ${e.message}`, "err");
-          throw e;
-        }
-
-        // STEP 3: Categorized Uploads
-        // Total items: 10 (quran) + 5 (prophets) + 5 (original_stories) + 5 (companions) = 25 items
-        log(`<br><span class="tag tag-step">STEP 3</span> Uploading tracks and generating colorful thumbnails...`, "step");
+        // Step 2: One-by-one download & upload for Quran (Surahs 105-114)
+        log(`<br><span class="tag tag-step">STEP 2</span> Streaming Quran tracks one-by-one...`, "step");
         const uploadUrl = `${baseUrl}/api/upload`;
-        let stepCount = 11;
+        const cachedSurahs = {}; // Cache 105-109 for reuse
+        let stepCount = 2;
 
-        // 3a. Quran category (all 10)
-        log(`<b>-- Category: quran --</b>`, "info");
         for (const num of SOURCE_NUMS) {
           const title = SURAH_NAMES[num];
           const stem = sanitizeFilename(title);
-          setProgress(++stepCount, 36, `Uploading [quran] ${title}...`);
+          setProgress(++stepCount, 27, `[quran] ${title}...`);
+          log(`  Downloading Surah ${num} (${title})...`, "info");
 
-          // Thumbnail
+          const audioBlob = await downloadSurah(num);
+          if (num <= 109) cachedSurahs[num] = audioBlob;
+
           const thumbBlob = await generateThumbBlob(title);
           await postBinary(uploadUrl, { name: `${stem}.png`, category: 'quran' }, thumbBlob);
 
-          // Audio
-          const audioBlob = audioMap[num];
           const res = await postBinary(uploadUrl, { name: `${stem}.mp3`, category: 'quran', title: title }, audioBlob);
-
           if (res.ok) {
             log(`  <span class="tag tag-ok">OK</span> [quran] ${title}`, "ok");
           } else {
@@ -675,25 +671,21 @@
           }
         }
 
-        // 3b. Re-use Surahs (105-109) for extra categories
+        // Step 3: Re-use cached audio for extra categories
+        log(`<br><span class="tag tag-step">STEP 3</span> Uploading extra categories...`, "step");
         const reUseIds = [105, 106, 107, 108, 109];
         for (const [cat, titles] of Object.entries(EXTRA_CATEGORIES)) {
           log(`<b>-- Category: ${cat} --</b>`, "info");
           for (let i = 0; i < titles.length; i++) {
             const title = titles[i];
             const stem = sanitizeFilename(title);
-            const sourceNum = reUseIds[i];
-            const audioBlob = audioMap[sourceNum];
+            const audioBlob = cachedSurahs[reUseIds[i]];
+            setProgress(++stepCount, 27, `[${cat}] ${title}...`);
 
-            setProgress(++stepCount, 36, `Uploading [${cat}] ${title}...`);
-
-            // Thumbnail
             const thumbBlob = await generateThumbBlob(title);
             await postBinary(uploadUrl, { name: `${stem}.png`, category: cat }, thumbBlob);
 
-            // Audio
             const res = await postBinary(uploadUrl, { name: `${stem}.mp3`, category: cat, title: title }, audioBlob);
-
             if (res.ok) {
               log(`  <span class="tag tag-ok">OK</span> [${cat}] ${title}`, "ok");
             } else {
@@ -702,35 +694,161 @@
           }
         }
 
-        // STEP 4: Finalize
-        log(`<br><span class="tag tag-step">STEP 4</span> Finalizing & refreshing device...`, "step");
-        setProgress(36, 36, "Refreshing device...");
-        try {
-          await fetch(`${baseUrl}/api/refresh`, { method: 'POST' });
-          log(`  <span class="tag tag-ok">OK</span> Refresh complete.`, "ok");
-        } catch (e) {
-          log(`  <span class="tag tag-warn">WARN</span> Refresh error: ${e.message}`, "warn");
-        }
-
-        // STEP 5: Health Check
-        log(`<br><b>--- System Health ---</b>`, "info");
-        try {
-          const pingRes = await fetch(`${baseUrl}/ping`).then(r => r.text());
-          log(`  Ping: ${pingRes}`, "info");
-        } catch (e) { log(`  Ping failed: ${e.message}`, "warn"); }
-
-        try {
-          const healthRes = await fetch(`${baseUrl}/api/health`).then(r => r.text());
-          log(`  Health: ${healthRes}`, "info");
-        } catch (e) { log(`  Health failed: ${e.message}`, "warn"); }
-
+        // Finalize
+        await finalizeDevice(baseUrl);
         setStatus("Completed!", "var(--accent-green)");
-        setProgress(100, 100, "All items uploaded successfully!");
-        log(`<br><span class="tag tag-ok">DONE</span> <b>Bulk download and upload process completed successfully!</b>`, "ok");
+        setProgress(100, 100, "Demo upload completed successfully!");
+        log(`<br><span class="tag tag-ok">DONE</span> <b>Demo upload finished!</b>`, "ok");
+        alert("Demo upload completed successfully!");
 
       } catch (err) {
         setStatus("Failed", "var(--accent-rose)");
-        log(`<br><span class="tag tag-err">ERROR</span> Process terminated: ${err.message}`, "err");
+        log(`<br><span class="tag tag-err">ERROR</span> ${err.message}`, "err");
+        alert(`Upload error: ${err.message}`);
+      } finally {
+        isRunning = false;
+        setButtonsDisabled(false);
+      }
+    }
+
+    // 2. ACTUAL UPLOAD (Reads content.json and streams one-by-one)
+    async function startActualUpload() {
+      if (isRunning) return;
+
+      let baseUrl;
+      try {
+        baseUrl = getBaseUrl();
+      } catch (err) {
+        log(`<span class="tag tag-err">ERR</span> ${err.message}`, "err");
+        alert(err.message);
+        return;
+      }
+
+      // Pre-check ping
+      log(`Checking device availability at ${baseUrl}/ping ...`, "info");
+      const pingResult = await checkPing(baseUrl, 4000);
+      if (!pingResult.ok) {
+        const targetIp = baseUrl.replace(/^http:\/\//, '');
+        log(`<span class="tag tag-err">DEVICE NOT FOUND</span> Could not reach device at ${targetIp} (${pingResult.error})`, "err");
+        alert(`Device not found at IP: ${targetIp}`);
+        return;
+      }
+
+      log(`<span class="tag tag-ok">DEVICE CONNECTED</span> Ping response: ${pingResult.text}`, "ok");
+
+      // Load content.json
+      log(`Loading content catalog from content.json ...`, "info");
+      let catalog;
+      try {
+        const jsonRes = await fetch('./content.json', { cache: 'no-store' });
+        if (!jsonRes.ok) throw new Error(`HTTP ${jsonRes.status}`);
+        catalog = await jsonRes.json();
+      } catch (e) {
+        log(`<span class="tag tag-err">ERR</span> Failed to load content.json: ${e.message}`, "err");
+        alert(`Failed to load content.json: ${e.message}`);
+        return;
+      }
+
+      // Count total items
+      let totalItems = 0;
+      for (const cat in catalog.categories) {
+        totalItems += catalog.categories[cat].length;
+      }
+
+      if (totalItems === 0) {
+        alert("No items found in content.json!");
+        return;
+      }
+
+      // Optional format prompt
+      const targetIp = baseUrl.replace(/^http:\/\//, '');
+      const shouldFormat = confirm(`Do you want to format NAND flash before uploading ${totalItems} tracks to ${targetIp}?\n\n• Click OK to ERASE device and upload fresh catalog.\n• Click Cancel to keep existing tracks and upload new files.`);
+
+      isRunning = true;
+      setButtonsDisabled(true);
+      setStatus("Uploading Catalog...", "var(--primary)");
+
+      try {
+        if (shouldFormat) {
+          log(`<br><span class="tag tag-step">FORMAT</span> Formatting device NAND flash...`, "step");
+          setProgress(0, totalItems, "Formatting NAND flash...");
+          const formatRes = await fetch(`${baseUrl}/api/format`, { method: 'POST' });
+          if (!formatRes.ok) throw new Error(`Format returned HTTP ${formatRes.status}`);
+          log(`  <span class="tag tag-ok">OK</span> NAND Formatted.`, "ok");
+        }
+
+        const uploadUrl = `${baseUrl}/api/upload`;
+        let processedCount = 0;
+
+        log(`<br><span class="tag tag-step">STREAMING</span> Uploading ${totalItems} tracks one-by-one...`, "step");
+
+        for (const cat in catalog.categories) {
+          const items = catalog.categories[cat];
+          log(`<b>-- Category: ${cat} (${items.length} items) --</b>`, "info");
+
+          for (const item of items) {
+            processedCount++;
+            const title = item.name;
+            const stem = sanitizeFilename(title);
+            setProgress(processedCount, totalItems, `[${cat}] (${processedCount}/${totalItems}) ${title}...`);
+            log(`[${processedCount}/${totalItems}] Processing [${cat}] "${title}"...`, "info");
+
+            // 1. Download or Generate Thumbnail
+            let thumbBlob = null;
+            if (item.thumbnail_path && !item.thumbnail_path.includes('example.com')) {
+              try {
+                const thumbRes = await fetch(item.thumbnail_path);
+                if (thumbRes.ok) {
+                  thumbBlob = await thumbRes.blob();
+                }
+              } catch (e) {
+                log(`    <span class="tag tag-warn">WARN</span> Thumbnail download failed for ${title}, falling back to auto-cover.`, "warn");
+              }
+            }
+
+            // Fallback to generated canvas thumbnail if no external thumbnail
+            if (!thumbBlob || thumbBlob.size < 100) {
+              thumbBlob = await generateThumbBlob(title);
+            }
+
+            // Upload Thumbnail
+            await postBinary(uploadUrl, { name: `${stem}.png`, category: cat }, thumbBlob);
+            thumbBlob = null; // Free memory immediately
+
+            // 2. Download Audio
+            let audioBlob = null;
+            try {
+              const audioRes = await fetch(item.audio_path);
+              if (!audioRes.ok) throw new Error(`HTTP ${audioRes.status}`);
+              audioBlob = await audioRes.blob();
+            } catch (e) {
+              log(`    <span class="tag tag-err">FAIL</span> Could not download audio for "${title}": ${e.message}`, "err");
+              continue; // Skip upload for this track if download failed
+            }
+
+            // Upload Audio
+            const upRes = await postBinary(uploadUrl, { name: `${stem}.mp3`, category: cat, title: title }, audioBlob);
+            audioBlob = null; // Free memory immediately
+
+            if (upRes.ok) {
+              log(`    <span class="tag tag-ok">OK</span> Uploaded [${cat}] ${title}`, "ok");
+            } else {
+              log(`    <span class="tag tag-err">FAIL</span> Upload failed for [${cat}] ${title}: ${upRes.msg}`, "err");
+            }
+          }
+        }
+
+        // Finalize
+        await finalizeDevice(baseUrl);
+        setStatus("Completed!", "var(--accent-green)");
+        setProgress(100, 100, "Catalog upload completed successfully!");
+        log(`<br><span class="tag tag-ok">DONE</span> <b>Catalog bulk upload completed!</b>`, "ok");
+        alert("Catalog upload completed successfully!");
+
+      } catch (err) {
+        setStatus("Failed", "var(--accent-rose)");
+        log(`<br><span class="tag tag-err">ERROR</span> ${err.message}`, "err");
+        alert(`Upload error: ${err.message}`);
       } finally {
         isRunning = false;
         setButtonsDisabled(false);
