@@ -302,6 +302,7 @@
         <div class="input-row">
           <input type="text" id="deviceIp" placeholder="192.168.1.21" value="192.168.1.21" />
           <button id="pingBtn" class="btn btn-outline" onclick="testPing()">Test Ping</button>
+          <button id="formatBtn" class="btn btn-outline" onclick="formatDevice()">Format NAND</button>
           <button id="startBtn" class="btn btn-primary" onclick="startProcess()">Start Bulk Upload</button>
         </div>
       </div>
@@ -539,6 +540,64 @@
       }
     }
 
+    function setButtonsDisabled(disabled) {
+      document.getElementById('startBtn').disabled = disabled;
+      document.getElementById('pingBtn').disabled = disabled;
+      const formatBtn = document.getElementById('formatBtn');
+      if (formatBtn) formatBtn.disabled = disabled;
+    }
+
+    // Format NAND helper with ping check
+    async function formatDevice() {
+      if (isRunning) return;
+
+      let baseUrl;
+      try {
+        baseUrl = getBaseUrl();
+      } catch (err) {
+        log(`<span class="tag tag-err">ERR</span> ${err.message}`, "err");
+        alert(err.message);
+        return;
+      }
+
+      const targetIp = baseUrl.replace(/^http:\/\//, '');
+
+      // Ping check before formatting
+      log(`Checking device availability at ${baseUrl}/ping ...`, "info");
+      const pingRes = await checkPing(baseUrl, 4000);
+      if (!pingRes.ok) {
+        log(`<span class="tag tag-err">DEVICE NOT FOUND</span> Could not reach device at ${targetIp} (${pingRes.error})`, "err");
+        alert(`Device not found at IP: ${targetIp}`);
+        return;
+      }
+
+      log(`<span class="tag tag-ok">DEVICE CONNECTED</span> Ping response: ${pingRes.text}`, "ok");
+
+      if (!confirm(`Are you sure you want to format NAND flash on ${targetIp}? This will erase all content on the device.`)) {
+        return;
+      }
+
+      isRunning = true;
+      setButtonsDisabled(true);
+      setProgress(0, 100, "Formatting NAND flash...");
+      log(`Formatting device NAND flash at ${baseUrl}/api/format ...`, "info");
+
+      try {
+        const res = await fetch(`${baseUrl}/api/format`, { method: "POST" });
+        if (!res.ok) throw new Error(`Format returned HTTP ${res.status}`);
+        log(`<span class="tag tag-ok">OK</span> NAND Formatted successfully.`, "ok");
+        setProgress(100, 100, "NAND Formatted successfully");
+        alert("NAND flash formatted successfully!");
+      } catch (err) {
+        log(`<span class="tag tag-err">FAIL</span> Format failed: ${err.message}`, "err");
+        alert(`Format failed: ${err.message}`);
+        setProgress(0, 100, "Format failed");
+      } finally {
+        isRunning = false;
+        setButtonsDisabled(false);
+      }
+    }
+
     // Download single Surah with retry
     async function downloadSurah(num) {
       const padNum = String(num).padStart(3, '0');
@@ -576,8 +635,7 @@
       log(`<span class="tag tag-ok">DEVICE CONNECTED</span> Ping response: ${pingResult.text}`, "ok");
 
       isRunning = true;
-      document.getElementById('startBtn').disabled = true;
-      document.getElementById('pingBtn').disabled = true;
+      setButtonsDisabled(true);
       setProgress(0, 100, "Device found. Starting downloads...");
       setStatus("Running...", "var(--primary)");
 
@@ -700,8 +758,7 @@
         log(`<br><span class="tag tag-err">ERROR</span> Process terminated: ${err.message}`, "err");
       } finally {
         isRunning = false;
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('pingBtn').disabled = false;
+        setButtonsDisabled(false);
       }
     }
   </script>
