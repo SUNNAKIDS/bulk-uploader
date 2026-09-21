@@ -294,14 +294,7 @@
   <div class="container">
     <header>
       <h1>SunnaKids Bulk Uploader</h1>
-      <p>Download Surahs 105–114, generate dynamic thumbnails, and upload directly to your device.</p>
     </header>
-
-    <div class="notice-box">
-      <strong>⚠️ Browser Connection Note:</strong>
-      All network requests originate straight from your browser to your local device. 
-      If hosting this page on <strong>HTTPS</strong> (e.g. Vercel/Netlify), your browser may block requests to local <strong>HTTP</strong> IPs (<code>http://192.168.x.x</code>) under Mixed Content security rules. For best results, host or access this page over <strong>plain HTTP</strong> or open it directly as a local file.
-    </div>
 
     <div class="card">
       <div class="form-group">
@@ -310,25 +303,6 @@
           <input type="text" id="deviceIp" placeholder="192.168.1.21" value="192.168.1.21" />
           <button id="pingBtn" class="btn btn-outline" onclick="testPing()">Test Ping</button>
           <button id="startBtn" class="btn btn-primary" onclick="startProcess()">Start Bulk Upload</button>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-title">Quran Tracks</div>
-          <div class="stat-val">10 Surahs</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Other Categories</div>
-          <div class="stat-val">15 Tracks</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Generated Covers</div>
-          <div class="stat-val">25 Unique PNGs</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Current Status</div>
-          <div class="stat-val" id="statusBadge" style="color: var(--text-muted);">Idle</div>
         </div>
       </div>
 
@@ -448,8 +422,10 @@
 
     function setStatus(text, color = "var(--text-muted)") {
       const badge = document.getElementById('statusBadge');
-      badge.innerText = text;
-      badge.style.color = color;
+      if (badge) {
+        badge.innerText = text;
+        badge.style.color = color;
+      }
     }
 
     function sanitizeFilename(name) {
