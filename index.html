@@ -278,8 +278,9 @@
           <input type="text" id="deviceIp" placeholder="192.168.1.21" value="192.168.1.21" />
           <button id="pingBtn" class="btn btn-outline" onclick="testPing()">Test Ping</button>
           <button id="formatBtn" class="btn btn-outline" onclick="formatDevice()">Format NAND</button>
-          <button id="demoBtn" class="btn btn-outline" onclick="startDemoUpload()">Demo Upload</button>
-          <button id="actualBtn" class="btn btn-primary" onclick="startActualUpload()">Production Upload</button>
+          <button id="demoBtn" class="btn btn-primary" onclick="startDemoUpload()">Demo Upload</button>
+          <!-- Production Upload hidden until catalog data is ready -->
+          <button id="actualBtn" class="btn btn-primary" onclick="startActualUpload()" style="display: none;">Production Upload</button>
         </div>
       </div>
 
@@ -304,7 +305,7 @@
           </div>
         </div>
         <div id="logBody" class="log-body">
-          <div class="log-entry info">Ready. Enter device IP and choose "Demo Upload" or "Production Upload".</div>
+          <div class="log-entry info">Ready. Enter device IP and click "Demo Upload".</div>
         </div>
       </div>
     </div>
