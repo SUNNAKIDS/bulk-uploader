@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "description": "SunnaKids Content Catalog for Bulk Device Upload",
+  "categories": {
+    "quran": [
+      {
+        "name": "Al-Fil",
+        "audio_path": "https://server8.mp3quran.net/afs/105.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/105.png"
+      },
+      {
+        "name": "Quraysh",
+        "audio_path": "https://server8.mp3quran.net/afs/106.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/106.png"
+      },
+      {
+        "name": "Al-Ma'un",
+        "audio_path": "https://server8.mp3quran.net/afs/107.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/107.png"
+      },
+      {
+        "name": "Al-Kawthar",
+        "audio_path": "https://server8.mp3quran.net/afs/108.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/108.png"
+      },
+      {
+        "name": "Al-Kafirun",
+        "audio_path": "https://server8.mp3quran.net/afs/109.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/109.png"
+      },
+      {
+        "name": "An-Nasr",
+        "audio_path": "https://server8.mp3quran.net/afs/110.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/110.png"
+      },
+      {
+        "name": "Al-Masad",
+        "audio_path": "https://server8.mp3quran.net/afs/111.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/111.png"
+      },
+      {
+        "name": "Al-Ikhlas",
+        "audio_path": "https://server8.mp3quran.net/afs/112.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/112.png"
+      },
+      {
+        "name": "Al-Falaq",
+        "audio_path": "https://server8.mp3quran.net/afs/113.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/113.png"
+      },
+      {
+        "name": "An-Nas",
+        "audio_path": "https://server8.mp3quran.net/afs/114.mp3",
+        "thumbnail_path": "https://example.com/covers/quran/114.png"
+      }
+    ],
+    "prophets": [
+      {
+        "name": "Story of Prophet Ibrahim",
+        "audio_path": "https://example.com/audio/prophets/ibrahim.mp3",
+        "thumbnail_path": "https://example.com/covers/prophets/ibrahim.png"
+      },
+      {
+        "name": "Story of Prophet Musa",
+        "audio_path": "https://example.com/audio/prophets/musa.mp3",
+        "thumbnail_path": "https://example.com/covers/prophets/musa.png"
+      },
+      {
+        "name": "Story of Prophet Yusuf",
+        "audio_path": "https://example.com/audio/prophets/yusuf.mp3",
+        "thumbnail_path": "https://example.com/covers/prophets/yusuf.png"
+      },
+      {
+        "name": "Story of Prophet Yunus",
+        "audio_path": "https://example.com/audio/prophets/yunus.mp3",
+        "thumbnail_path": "https://example.com/covers/prophets/yunus.png"
+      },
+      {
+        "name": "Story of Prophet Isa",
+        "audio_path": "https://example.com/audio/prophets/isa.mp3",
+        "thumbnail_path": "https://example.com/covers/prophets/isa.png"
+      }
+    ],
+    "original_stories": [
+      {
+        "name": "The People of the Cave",
+        "audio_path": "https://example.com/audio/stories/cave.mp3",
+        "thumbnail_path": "https://example.com/covers/stories/cave.png"
+      },
+      {
+        "name": "The People of the Elephant",
+        "audio_path": "https://example.com/audio/stories/elephant.mp3",
+        "thumbnail_path": "https://example.com/covers/stories/elephant.png"
+      },
+      {
+        "name": "The Story of Luqman",
+        "audio_path": "https://example.com/audio/stories/luqman.mp3",
+        "thumbnail_path": "https://example.com/covers/stories/luqman.png"
+      },
+      {
+        "name": "The Story of Qarun",
+        "audio_path": "https://example.com/audio/stories/qarun.mp3",
+        "thumbnail_path": "https://example.com/covers/stories/qarun.png"
+      },
+      {
+        "name": "The Story of Dhul-Qarnayn",
+        "audio_path": "https://example.com/audio/stories/dhul_qarnayn.mp3",
+        "thumbnail_path": "https://example.com/covers/stories/dhul_qarnayn.png"
+      }
+    ],
+    "companions": [
+      {
+        "name": "Life of Abu Bakr",
+        "audio_path": "https://example.com/audio/companions/abu_bakr.mp3",
+        "thumbnail_path": "https://example.com/covers/companions/abu_bakr.png"
+      },
+      {
+        "name": "Life of Umar",
+        "audio_path": "https://example.com/audio/companions/umar.mp3",
+        "thumbnail_path": "https://example.com/covers/companions/umar.png"
+      },
+      {
+        "name": "Life of Uthman",
+        "audio_path": "https://example.com/audio/companions/uthman.mp3",
+        "thumbnail_path": "https://example.com/covers/companions/uthman.png"
+      },
+      {
+        "name": "Life of Ali",
+        "audio_path": "https://example.com/audio/companions/ali.mp3",
+        "thumbnail_path": "https://example.com/covers/companions/ali.png"
+      },
+      {
+        "name": "Life of Khalid ibn Al-Walid",
+        "audio_path": "https://example.com/audio/companions/khalid.mp3",
+        "thumbnail_path": "https://example.com/covers/companions/khalid.png"
+      }
+    ]
+  }
+}
