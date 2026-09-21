@@ -279,7 +279,7 @@
           <button id="pingBtn" class="btn btn-outline" onclick="testPing()">Test Ping</button>
           <button id="formatBtn" class="btn btn-outline" onclick="formatDevice()">Format NAND</button>
           <button id="demoBtn" class="btn btn-outline" onclick="startDemoUpload()">Demo Upload</button>
-          <button id="actualBtn" class="btn btn-primary" onclick="startActualUpload()">Actual Upload (JSON)</button>
+          <button id="actualBtn" class="btn btn-primary" onclick="startActualUpload()">Production Upload</button>
         </div>
       </div>
 
@@ -304,7 +304,7 @@
           </div>
         </div>
         <div id="logBody" class="log-body">
-          <div class="log-entry info">Ready. Enter device IP and click "Start Bulk Upload".</div>
+          <div class="log-entry info">Ready. Enter device IP and choose "Demo Upload" or "Production Upload".</div>
         </div>
       </div>
     </div>
@@ -841,9 +841,9 @@
         // Finalize
         await finalizeDevice(baseUrl);
         setStatus("Completed!", "var(--accent-green)");
-        setProgress(100, 100, "Catalog upload completed successfully!");
-        log(`<br><span class="tag tag-ok">DONE</span> <b>Catalog bulk upload completed!</b>`, "ok");
-        alert("Catalog upload completed successfully!");
+        setProgress(100, 100, "Production upload completed successfully!");
+        log(`<br><span class="tag tag-ok">DONE</span> <b>Production bulk upload completed!</b>`, "ok");
+        alert("Production upload completed successfully!");
 
       } catch (err) {
         setStatus("Failed", "var(--accent-rose)");
