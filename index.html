@@ -478,6 +478,26 @@
       });
     }
 
+    // Ping check helper with timeout
+    async function checkPing(baseUrl, timeoutMs = 4000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(`${baseUrl}/ping`, {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        return { ok: true, text };
+      } catch (err) {
+        clearTimeout(timer);
+        return { ok: false, error: err.name === 'AbortError' ? 'Connection timed out' : err.message };
+      }
+    }
+
     // Test ping helper
     async function testPing() {
       let baseUrl;
@@ -485,16 +505,17 @@
         baseUrl = getBaseUrl();
       } catch (err) {
         log(`<span class="tag tag-err">ERR</span> ${err.message}`, "err");
+        alert(err.message);
         return;
       }
 
       log(`Pinging ${baseUrl}/ping ...`, "info");
-      try {
-        const res = await fetch(`${baseUrl}/ping`, { method: "GET", cache: "no-store" });
-        const text = await res.text();
-        log(`<span class="tag tag-ok">PING OK</span> Response: ${text}`, "ok");
-      } catch (err) {
-        log(`<span class="tag tag-err">PING FAIL</span> ${err.message} (Check device IP and network connection)`, "err");
+      const res = await checkPing(baseUrl, 4000);
+      if (res.ok) {
+        log(`<span class="tag tag-ok">PING OK</span> Response: ${res.text}`, "ok");
+      } else {
+        log(`<span class="tag tag-err">PING FAIL</span> ${res.error} (Device not found)`, "err");
+        alert(`Device not found at IP: ${baseUrl.replace(/^http:\/\//, '')}`);
       }
     }
 
@@ -538,13 +559,26 @@
         baseUrl = getBaseUrl();
       } catch (err) {
         log(`<span class="tag tag-err">ERR</span> ${err.message}`, "err");
+        alert(err.message);
         return;
       }
+
+      // Pre-check: Device must be reachable before proceeding
+      log(`Checking device availability at ${baseUrl}/ping ...`, "info");
+      const pingResult = await checkPing(baseUrl, 4000);
+      if (!pingResult.ok) {
+        const targetIp = baseUrl.replace(/^http:\/\//, '');
+        log(`<span class="tag tag-err">DEVICE NOT FOUND</span> Could not reach device at ${targetIp} (${pingResult.error})`, "err");
+        alert(`Device not found at IP: ${targetIp}`);
+        return;
+      }
+
+      log(`<span class="tag tag-ok">DEVICE CONNECTED</span> Ping response: ${pingResult.text}`, "ok");
 
       isRunning = true;
       document.getElementById('startBtn').disabled = true;
       document.getElementById('pingBtn').disabled = true;
-      setProgress(0, 100, "Starting...");
+      setProgress(0, 100, "Device found. Starting downloads...");
       setStatus("Running...", "var(--primary)");
 
       try {
